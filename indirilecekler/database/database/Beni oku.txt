@@ -1,0 +1,5 @@
+1.MondoDb compassı uygulamasını açın açın
+2.bağlantı kısımından (+) işaretine basıp testdb adında bir db oluşturun(1 numaralı fotoğraf)
+3.test db db' sinin üzerindeki(+) tuşuna basıp (dictionary) adında bir tablo oluşturun(2. numaralı fotoğraf)
+4.dictionary tablosunun içerisinde add data(yeşil buton) basıp açılan sekmede import json tuşuna basın oradan benim atmış olduğum dosyanın içerisindeki sozluk.json dosyasına tıklayıp kelimeleri import edin
+
