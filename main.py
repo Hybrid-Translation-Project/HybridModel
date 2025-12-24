@@ -11,9 +11,7 @@ Architecture:
     4. If ambiguous → AI/LLM is invoked to choose best translation
     5. Final translation returned to user
 """
-# ... diğer importlar ...
-import torch
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
+
 import os
 import sys
 import json
@@ -41,12 +39,11 @@ from mongo_api import find_word, find_all_meanings, USE_MOCK_DATA
 @dataclass
 class TranslatorConfig:
     """Configuration for the hybrid translator."""
-    ambiguity_threshold: int = 3
-    max_candidates: int = 10
+    ambiguity_threshold: int = 3  # If score difference < this, consider ambiguous
+    max_candidates: int = 10       # Maximum candidates to consider
     prolog_file: str = "que_translator.pl"
     debug_mode: bool = True
-    # BURAYI EKLE: Senin model klasörünün yolu
-    ai_model_path: str = "./final_marian_model"
+
 
 CONFIG = TranslatorConfig()
 
@@ -150,33 +147,6 @@ class PrologTranslator:
             print(f"[ERROR] Failed to initialize Prolog: {e}")
             return False
     
-    def _to_prolog_atom(self,s: str) -> str:
-        s = s.replace("\\", "\\\\").replace("'", "\\'")
-        return f"'{s}'"
-    
-    def _parse_breakdown(self,term):
-        try:
-            if not isinstance(term, (list, tuple)):
-                return None
-            d = {}
-            for kv in term:
-                if isinstance(kv, (list, tuple)) and len(kv) == 2:
-                    k, v = kv
-                    d[str(k)] = float(v)
-                else:
-                    s = str(kv)
-                    if "-" in s:
-                        k, v = s.split("-", 1)
-                        d[k.strip()] = float(v)
-            return ScoreBreakdown(
-                frequency=float(d.get("frequency", 0)),
-                collocation=float(d.get("collocation", 0)),
-                semantic=float(d.get("semantic", 0)),
-                pos_match=float(d.get("pos_match", 0)),
-                ngram=float(d.get("ngram", 0)),
-            )
-        except Exception:
-            return None
     def generate_candidates(self, word_list: List[str]) -> List[TranslationCandidate]:
         """
         Query Prolog to generate all translation candidates.
@@ -192,10 +162,9 @@ class PrologTranslator:
                 return self._mock_candidates(word_list)
         
         try:
-            # Build Prolog query with quoted atoms for UTF-8 support
-            # Wrap each word in single quotes to handle Turkish characters
-            quoted_words = [f"'{word.lower()}'" for word in word_list]
-            prolog_list = "[" + ", ".join(quoted_words) + "]"
+            # Build Prolog query
+            # Convert Python list to Prolog list format
+            prolog_list = "[" + ", ".join(word_list) + "]"
             query = f"translate_with_scores({prolog_list}, Results)"
             
             if CONFIG.debug_mode:
@@ -218,8 +187,16 @@ class PrologTranslator:
                         
                         # Parse breakdown if available
                         breakdown = None
-                        if len(item) >= 3:
-                             breakdown = self._parse_breakdown(item[2])
+                        if len(item) >= 3 and isinstance(item[2], dict):
+                            bd = item[2]
+                            breakdown = ScoreBreakdown(
+                                frequency=float(bd.get('frequency', 0)),
+                                collocation=float(bd.get('collocation', 0)),
+                                semantic=float(bd.get('semantic', 0)),
+                                pos_match=float(bd.get('pos_match', 0)),
+                                ngram=float(bd.get('ngram', 0))
+                            )
+                        
                         candidates.append(TranslationCandidate(translation, score, breakdown))
             
             # Sort by score descending
@@ -383,99 +360,41 @@ def is_ambiguous(candidates: List[TranslationCandidate]) -> Tuple[bool, float]:
 # AI/LLM Integration (Mock Implementation)
 # ============================================================
 
-# ============================================================
-# AI/LLM Integration (Real MarianMT Implementation)
-# ============================================================
-
-# 1. GLOBAL DEĞİŞKENLER VE AYARLAR
-# Bu değişkenler modelin sadece bir kez yüklenmesini sağlar (Hafıza Tasarrufu)
-_AI_MODEL = None
-_AI_TOKENIZER = None
-# Eğer GPU varsa kullan, yoksa CPU kullan
-_AI_DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-
-def load_ai_model():
-    """
-    Modeli hafızaya yükleyen yardımcı fonksiyon.
-    Bu fonksiyon çağrıldığında:
-    1. Global değişkenleri kontrol eder.
-    2. Model zaten yüklüyse hiçbir şey yapmaz (Hız kazanır).
-    3. Yüklü değilse diskten okuyup GPU'ya atar.
-    """
-    global _AI_MODEL, _AI_TOKENIZER
-    
-    # Model zaten hafızadaysa tekrar yükleme, True dön
-    if _AI_MODEL is not None:
-        return True
-
-    print(f"[SYSTEM] Loading AI Model from {CONFIG.ai_model_path} on {_AI_DEVICE}...")
-    try:
-        # Modeli ve Tokenizer'ı belirtilen yoldan yükle
-        _AI_TOKENIZER = AutoTokenizer.from_pretrained(CONFIG.ai_model_path)
-        _AI_MODEL = AutoModelForSeq2SeqLM.from_pretrained(CONFIG.ai_model_path).to(_AI_DEVICE)
-        print("[SYSTEM] AI Model loaded successfully!")
-        return True
-    except Exception as e:
-        print(f"[ERROR] Could not load AI model: {e}")
-        print(f"[HINT] Lütfen klasör yolunun doğru olduğundan emin olun: {CONFIG.ai_model_path}")
-        return False
-
 def ai_resolve_ambiguity(
     input_sentence: List[str],
     candidates: List[TranslationCandidate],
     context: Optional[str] = None
 ) -> TranslationCandidate:
     """
-    Prolog yetersiz kaldığında (Ambiguity durumu) çağrılır.
-    Modeli kullanarak cümleyi SIFIRDAN çevirir (Generation Mode).
+    Use an LLM to resolve ambiguous translations.
+    
+    This is a mock implementation. In production, replace with actual API calls
+    to OpenAI, Azure OpenAI, or other LLM providers.
+    
+    Args:
+        input_sentence: Original Turkish words
+        candidates: Top translation candidates
+        context: Optional additional context
+        
+    Returns:
+        The best candidate chosen by AI
     """
+    # Build the prompt
+    prompt = build_ai_prompt(input_sentence, candidates, context)
     
-    # 1. Modeli Yükle (Fonksiyonu burada çağırıyoruz)
-    if not load_ai_model():
-        # Eğer model yüklenemezse mecburen Prolog'un ilk cevabını döndür
-        return candidates[0] if candidates else TranslationCandidate("Error", 0.0)
-
-    # 2. Girdiyi Hazırla
-    # Kelime listesini cümleye çevir: ['Ben', 'geldim'] -> "Ben geldim"
-    raw_text = " ".join(input_sentence)
-    
-    # SENİN EĞİTİM FORMATIN: Model TR->EN olduğu için >>en<< ekliyoruz.
-    formatted_input = f">>en<< {raw_text}"
-
     if CONFIG.debug_mode:
-        print(f"\n[AI HANDOVER] Prolog kararsız. MarianMT devreye giriyor...")
-        print(f"[AI INPUT] {formatted_input}")
-
-    try:
-        # 3. Modelden Üretim İste
-        inputs = _AI_TOKENIZER(formatted_input, return_tensors="pt").to(_AI_DEVICE)
-        
-        with torch.no_grad():
-            translated_tokens = _AI_MODEL.generate(
-                **inputs,
-                max_length=128,
-                num_beams=5, # En iyi cümleyi kurması için 5 farklı yol dener
-                early_stopping=True
-            )
-        
-        # 4. Çıktıyı Oku
-        ai_translation = _AI_TOKENIZER.decode(translated_tokens[0], skip_special_tokens=True)
-        
-        if CONFIG.debug_mode:
-            print(f"[AI RESULT] Model Çevirisi: '{ai_translation}'")
-
-        # 5. Sonucu Döndür
-        # AI sonucunu 'kesin doğru' (Score 100) olarak işaretleyip döndürüyoruz.
-        return TranslationCandidate(
-            translation=ai_translation,
-            score=100.0, 
-            breakdown=ScoreBreakdown(semantic=100.0, frequency=100.0) # Dummy değerler
-        )
-
-    except Exception as e:
-        print(f"[ERROR] AI Generation failed: {e}")
-        # Hata durumunda Prolog'un tahminine geri dön
-        return candidates[0] if candidates else TranslationCandidate(raw_text, 0.0)
+        print("\n[AI HANDOVER] Ambiguous translation detected!")
+        print("=" * 50)
+        print(prompt)
+        print("=" * 50)
+    
+    # MOCK IMPLEMENTATION
+    # In production, replace this with actual LLM API call
+    chosen = mock_llm_response(input_sentence, candidates)
+    
+    print(f"[AI DECISION] Selected: '{chosen.translation}' (score: {chosen.score})")
+    
+    return chosen
 
 
 def build_ai_prompt(
@@ -573,19 +492,8 @@ def mock_llm_response(
 # Main Translation Pipeline
 # ============================================================
 
-# ============================================================
-# MAIN TRANSLATION PIPELINE (UPDATED FOR AI FALLBACK)
-# ============================================================
-
 class HybridTranslator:
-    """
-    Hibrit Çeviri Orkestratörü.
-    Mantık Akışı:
-    1. Prolog'a sor.
-    2. Prolog cevap veremezse -> AI Modelini çalıştır (Coverage Fail).
-    3. Prolog cevap verir ama kararsızsa (Ambiguous) -> AI Modelini çalıştır (Confidence Fail).
-    4. Prolog eminse -> Prolog cevabını kullan.
-    """
+    """Main orchestrator for the hybrid translation system."""
     
     def __init__(self, config: TranslatorConfig = None):
         self.config = config or CONFIG
@@ -597,16 +505,20 @@ class HybridTranslator:
         context: Optional[str] = None
     ) -> TranslationResult:
         """
-        Türkçe kelime listesini İngilizceye çevirir.
+        Translate Turkish words to English using hybrid approach.
+        
+        Args:
+            input_words: List of Turkish words
+            context: Optional context for better translation
+            
+        Returns:
+            TranslationResult with best translation and metadata
         """
         print(f"\n{'='*60}")
         print(f"Translating: {input_words}")
         print('='*60)
         
-        # ---------------------------------------------------------
-        # ADIM 1: Prolog'dan Adayları İste
-        # ---------------------------------------------------------
-        # Prolog arka planda morphology.pl ve mongo_con.pl'i kullanır.
+        # Step 1: Get candidates from Prolog
         candidates = self.prolog.generate_candidates(input_words)
         
         if self.config.debug_mode:
@@ -614,51 +526,32 @@ class HybridTranslator:
             for i, c in enumerate(candidates[:5], 1):
                 print(f"  {i}. '{c.translation}' (score: {c.score})")
         
-        # ---------------------------------------------------------
-        # ADIM 2: KRİTİK KONTROL - Prolog Başarısız mı?
-        # ---------------------------------------------------------
-        # Eğer candidates listesi boşsa, Prolog kelimeyi bilememiştir
-        # veya morfolojik analiz yapamamıştır.
-        # ESKİ KOD: input_words'ü geri döndürüyordu.
-        # YENİ KOD: MarianMT'yi çağırıyoruz.
-        
         if not candidates:
-            if self.config.debug_mode:
-                print("\n[FAIL STATE] Prolog aday üretemedi. Yapay Zeka devreye giriyor...")
-            
-            # AI Fonksiyonunu çağır (Generation Mode)
-            # context yerine boş bir liste gönderiyoruz, çünkü aday yok.
-            ai_result = ai_resolve_ambiguity(input_words, [], context)
-            
             return TranslationResult(
                 input_sentence=input_words,
-                candidates=[ai_result],
-                best_translation=ai_result.translation,
-                is_ambiguous=True,   # Prolog bilemediği için teknik olarak belirsiz
-                ai_resolved=True,    # AI çözdü
-                confidence=0.95      # AI'ya güvenimiz tam
+                candidates=[],
+                best_translation=" ".join(input_words),
+                is_ambiguous=True,
+                ai_resolved=False,
+                confidence=0.0
             )
         
-        # ---------------------------------------------------------
-        # ADIM 3: Ambiguity (Kararsızlık) Kontrolü
-        # ---------------------------------------------------------
+        # Step 2: Check for ambiguity
         ambiguous, confidence = is_ambiguous(candidates)
         
         if self.config.debug_mode:
             print(f"\n[AMBIGUITY CHECK] Ambiguous: {ambiguous}, Confidence: {confidence:.2f}")
         
-        # ---------------------------------------------------------
-        # ADIM 4: Çözümleme (Resolution)
-        # ---------------------------------------------------------
-        if ambiguous:
-            # Prolog kararsız kaldı, AI son sözü söylesin.
+        # Step 3: Resolve if needed
+        if ambiguous and len(candidates) > 1:
+            # AI handover
             best = ai_resolve_ambiguity(input_words, candidates, context)
             ai_resolved = True
         else:
-            # Prolog emin, ilk adayı seç.
+            # Clear winner
             best = candidates[0]
             ai_resolved = False
-            print(f"\n[RESULT] Rule-Based Winner: '{best.translation}'")
+            print(f"\n[RESULT] Clear winner: '{best.translation}'")
         
         return TranslationResult(
             input_sentence=input_words,
@@ -671,14 +564,18 @@ class HybridTranslator:
     
     def translate_sentence(self, sentence: str) -> TranslationResult:
         """
-        Cümle bazlı çeviri arayüzü.
-        """
-        # Basit tokenize işlemi
-        words = sentence.strip().lower().split()
-        if not words:
-            return TranslationResult([], [], "", False, False, 0.0)
+        Translate a Turkish sentence string.
+        
+        Args:
+            sentence: Turkish sentence as string
             
+        Returns:
+            TranslationResult
+        """
+        # Tokenize (simple split for now)
+        words = sentence.strip().lower().split()
         return self.translate(words)
+
 
 # ============================================================
 # Interactive CLI

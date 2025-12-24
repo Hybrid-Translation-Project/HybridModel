@@ -12,6 +12,7 @@ from interfaces import data_add_page
 from interfaces import data_search_page
 from interfaces import data_delete_page
 from interfaces import data_json_operations_page
+from interfaces import translation_page  # <--- YENİ EKLENDİ
 
 # Extract modülleri interfaces klasörü içinde
 from interfaces import extract_from_docx
@@ -19,18 +20,14 @@ from interfaces import extract_from_pdf
 from interfaces import extract_from_turkishVideo
 from interfaces import extract_from_englishVideo
 
-
-
 def get_desktop_dir() -> str:
     userprofile = os.environ.get("USERPROFILE") or os.path.expanduser("~")
-
     candidates = [
         os.path.join(userprofile, "OneDrive", "Desktop"),
         os.path.join(userprofile, "Desktop"),
         os.path.join(userprofile, "OneDrive", "Masaüstü"),
         os.path.join(userprofile, "Masaüstü"),
     ]
-
     homedrive = os.environ.get("HOMEDRIVE")
     homepath = os.environ.get("HOMEPATH")
     if homedrive and homepath:
@@ -39,17 +36,10 @@ def get_desktop_dir() -> str:
             os.path.join(home, "Desktop"),
             os.path.join(home, "OneDrive", "Desktop"),
         ])
-
     for p in candidates:
         if p and os.path.isdir(p):
             return p
-
-    fallback = os.path.join(userprofile, "Desktop")
-    try:
-        os.makedirs(fallback, exist_ok=True)
-        return fallback
-    except Exception:
-        return current_dir
+    return os.path.join(userprofile, "Desktop")
 
 
 def get_desktop_txt_path(input_path: str) -> str:
@@ -73,13 +63,15 @@ class MainWindow(library.QWidget):
         self.search_page = data_search_page.SearchPage()
         self.delete_page = data_delete_page.DeletePage()
         self.json_page = data_json_operations_page.JsonUploadPage()
+        self.translation_page = translation_page.TranslationPage() # <--- EKLENDİ
 
         # Stack
         self.stack = library.QStackedWidget()
-        self.stack.addWidget(self.add_page)
-        self.stack.addWidget(self.search_page)
-        self.stack.addWidget(self.delete_page)
-        self.stack.addWidget(self.json_page)
+        self.stack.addWidget(self.add_page)      # Index 0
+        self.stack.addWidget(self.search_page)   # Index 1
+        self.stack.addWidget(self.delete_page)   # Index 2
+        self.stack.addWidget(self.json_page)     # Index 3
+        self.stack.addWidget(self.translation_page) # Index 4 <--- EKLENDİ
 
         # Ana layout
         main_layout = library.QVBoxLayout()
@@ -103,11 +95,15 @@ class MainWindow(library.QWidget):
         top_buttons.addWidget(
             library.QPushButton("JSON İşlemleri", clicked=lambda: self.stack.setCurrentWidget(self.json_page))
         )
+        # ÇEVİRİ BUTONU
+        top_buttons.addWidget(
+            library.QPushButton("Çeviri (AI)", clicked=lambda: self.stack.setCurrentWidget(self.translation_page))
+        )
 
         main_layout.addLayout(top_buttons)
         main_layout.addWidget(self.stack, stretch=1)
 
-        # ALT BUTONLAR
+        # ALT BUTONLAR (Extract)
         divider = library.QFrame()
         divider.setFrameShape(library.QFrame.HLine)
         divider.setFrameShadow(library.QFrame.Sunken)
@@ -123,79 +119,45 @@ class MainWindow(library.QWidget):
 
         main_layout.addLayout(bottom_buttons)
 
-    # ---------------------------------------------------------------------
-    # MODÜLER AKIŞ: sadece dosya seç + output path belirle + modül fonksiyonu çağır
-    # ---------------------------------------------------------------------
     def open_docx_dialog(self):
-        path, _ = library.QFileDialog.getOpenFileName(
-            self, "DOCX Dosyası Seç", "", "Word Dosyaları (*.docx)"
-        )
-        if not path:
-            return
-
-        out_txt = get_desktop_txt_path(path)
-
-        try:
-            # Beklenen: interfaces/extract_from_docx.py içinde extract_docx_to_txt(input_path, output_txt_path)
-            extract_from_docx.extract_docx_to_txt(path, out_txt)
-            library.QMessageBox.information(self, "Başarılı", f"TXT masaüstüne kaydedildi:\n{out_txt}")
-        except Exception as e:
-            library.QMessageBox.critical(self, "Hata", f"DOCX işlemi başarısız:\n{e}")
+        path, _ = library.QFileDialog.getOpenFileName(self, "DOCX Seç", "", "Word (*.docx)")
+        if path:
+            out = get_desktop_txt_path(path)
+            try:
+                extract_from_docx.extract_docx_to_txt(path, out)
+                library.QMessageBox.information(self, "Başarılı", f"Kayıt: {out}")
+            except Exception as e:
+                library.QMessageBox.critical(self, "Hata", str(e))
 
     def open_pdf_dialog(self):
-        path, _ = library.QFileDialog.getOpenFileName(
-            self, "PDF Dosyası Seç", "", "PDF Dosyaları (*.pdf)"
-        )
-        if not path:
-            return
-
-        out_txt = get_desktop_txt_path(path)
-
-        try:
-            # Beklenen: interfaces/extract_from_pdf.py içinde extract_pdf_to_txt(input_path, output_txt_path)
-            extract_from_pdf.extract_pdf_to_txt(path, out_txt)
-            library.QMessageBox.information(self, "Başarılı", f"TXT masaüstüne kaydedildi:\n{out_txt}")
-        except Exception as e:
-            library.QMessageBox.critical(self, "Hata", f"PDF işlemi başarısız:\n{e}")
+        path, _ = library.QFileDialog.getOpenFileName(self, "PDF Seç", "", "PDF (*.pdf)")
+        if path:
+            out = get_desktop_txt_path(path)
+            try:
+                extract_from_pdf.extract_pdf_to_txt(path, out)
+                library.QMessageBox.information(self, "Başarılı", f"Kayıt: {out}")
+            except Exception as e:
+                library.QMessageBox.critical(self, "Hata", str(e))
 
     def open_tr_video_dialog(self):
-        path, _ = library.QFileDialog.getOpenFileName(
-            self,
-            "Türkçe Video Dosyası Seç",
-            "",
-            "Video Dosyaları (*.mp4 *.mkv *.mov *.avi *.webm);;Tüm Dosyalar (*.*)"
-        )
-        if not path:
-            return
-
-        out_txt = get_desktop_txt_path(path)
-
-        try:
-            # Beklenen: interfaces/extract_from_turkishVideo.py içinde extract_tr_video_to_txt(input_path, output_txt_path)
-            extract_from_turkishVideo.extract_tr_video_to_txt(path, out_txt)
-            library.QMessageBox.information(self, "Başarılı", f"TXT masaüstüne kaydedildi:\n{out_txt}")
-        except Exception as e:
-            library.QMessageBox.critical(self, "Hata", f"TR video işlemi başarısız:\n{e}")
+        path, _ = library.QFileDialog.getOpenFileName(self, "TR Video", "", "Video (*.mp4 *.mkv *.avi)")
+        if path:
+            out = get_desktop_txt_path(path)
+            try:
+                extract_from_turkishVideo.extract_tr_video_to_txt(path, out)
+                library.QMessageBox.information(self, "Başarılı", f"Kayıt: {out}")
+            except Exception as e:
+                library.QMessageBox.critical(self, "Hata", str(e))
 
     def open_en_video_dialog(self):
-        path, _ = library.QFileDialog.getOpenFileName(
-            self,
-            "İngilizce Video Dosyası Seç",
-            "",
-            "Video Dosyaları (*.mp4 *.mkv *.mov *.avi *.webm);;Tüm Dosyalar (*.*)"
-        )
-        if not path:
-            return
-
-        out_txt = get_desktop_txt_path(path)
-
-        try:
-            # Beklenen: interfaces/extract_from_englishVideo.py içinde extract_en_video_to_txt(input_path, output_txt_path)
-            extract_from_englishVideo.extract_en_video_to_txt(path, out_txt)
-            library.QMessageBox.information(self, "Başarılı", f"TXT masaüstüne kaydedildi:\n{out_txt}")
-        except Exception as e:
-            library.QMessageBox.critical(self, "Hata", f"EN video işlemi başarısız:\n{e}")
-
+        path, _ = library.QFileDialog.getOpenFileName(self, "EN Video", "", "Video (*.mp4 *.mkv *.avi)")
+        if path:
+            out = get_desktop_txt_path(path)
+            try:
+                extract_from_englishVideo.extract_en_video_to_txt(path, out)
+                library.QMessageBox.information(self, "Başarılı", f"Kayıt: {out}")
+            except Exception as e:
+                library.QMessageBox.critical(self, "Hata", str(e))
 
 if __name__ == "__main__":
     app = library.QApplication(sys.argv)

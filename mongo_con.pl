@@ -1,5 +1,3 @@
-:- encoding(utf8).
-
 :- module(mongo_con, [
     lookup_word/3,
     lookup_all_meanings/2,
@@ -30,10 +28,10 @@ use_mock(true).
    Format: mock_word(Tr, En, POS, Frequency, SemanticClass)
 ---------------------------------------------------------- */
 
-% yüz - çok anlamlı
-mock_word(yüz, face, noun, 85, body_part).
-mock_word(yüz, hundred, noun, 72, number).
-mock_word(yüz, swim, verb, 35, motion).
+% yuz - çok anlamlı
+mock_word(yuz, face, noun, 85, body_part).
+mock_word(yuz, hundred, noun, 72, number).
+mock_word(yuz, swim, verb, 35, motion).
 
 % zamirler
 mock_word(ben, 'I', pronoun, 98, animate).
@@ -51,14 +49,14 @@ mock_word(sev, like, verb, 82, emotion).
 
 % fiiller - tüketim
 mock_word(ye, eat, verb, 75, consumption).
-mock_word(iç, drink, verb, 70, consumption).
+mock_word(ic, drink, verb, 70, consumption).
 
 % fiiller - hareket
 mock_word(git, go, verb, 88, motion).
 mock_word(gel, come, verb, 86, motion).
 
 % fiiller - aksiyon
-mock_word(yıka, wash, verb, 50, action).
+mock_word(yika, wash, verb, 50, action).
 mock_word(oku, read, verb, 65, cognitive).
 mock_word(yaz, write, verb, 60, cognitive).
 mock_word(yaz, summer, noun, 55, time).
@@ -82,13 +80,13 @@ mock_word(para, money, noun, 72, abstract).
 
 % isimler - canlılar
 mock_word(kedi, cat, noun, 55, animate).
-mock_word(köpek, dog, noun, 52, animate).
+mock_word(kopek, dog, noun, 52, animate).
 
 % sıfatlar
-mock_word(güzel, beautiful, adjective, 70, property).
-mock_word(güzel, nice, adjective, 68, property).
-mock_word(büyük, big, adjective, 75, property).
-mock_word(küçük, small, adjective, 72, property).
+mock_word(guzel, beautiful, adjective, 70, property).
+mock_word(guzel, nice, adjective, 68, property).
+mock_word(buyuk, big, adjective, 75, property).
+mock_word(kucuk, small, adjective, 72, property).
 
 /* ---------------------------------------------------------
    2. COLLOCATIONS - Eşdizimlilik
@@ -96,10 +94,10 @@ mock_word(küçük, small, adjective, 72, property).
    Strength: 0-100 arası
 ---------------------------------------------------------- */
 
-collocation(yüz, yıka, 92, face, wash).      % yüz yıka -> wash face
-collocation(yüz, metre, 88, hundred, _).     % yüz metre -> hundred meters
-collocation(yüz, lira, 95, hundred, _).      % yüz lira -> hundred lira
-collocation(su, iç, 94, water, drink).       % su iç -> drink water
+collocation(yuz, yika, 92, face, wash).      % yüz yıka -> wash face
+collocation(yuz, metre, 88, hundred, _).     % yüz metre -> hundred meters
+collocation(yuz, lira, 95, hundred, _).      % yüz lira -> hundred lira
+collocation(su, ic, 94, water, drink).       % su iç -> drink water
 collocation(elma, ye, 90, apple, eat).       % elma ye -> eat apple
 collocation(kitap, oku, 93, book, read).     % kitap oku -> read book
 collocation(mektup, yaz, 85, _, write).      % mektup yaz -> write letter
