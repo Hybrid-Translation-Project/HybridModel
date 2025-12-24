@@ -390,6 +390,7 @@ generate_sov_advanced(TrWords, Translation, Score, Breakdown) :-
       ; sub_string(EnVerbStr, 0, 5, _, "they ")
       ; sub_string(EnVerbStr, 0, 3, _, "we ")
       ; sub_string(EnVerbStr, 0, 7, _, "he/she ")
+      ; sub_string(EnVerbStr, 0, 3, _, "it ")     % <-- o geliyordu gibi cümleler için it was coming
       )
     ->
       % Fiil zaten özne içeriyor (I am going)

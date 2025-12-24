@@ -45,6 +45,7 @@ verb_root(yüz, swim, irregular).
 verb_root(sat, sell, irregular).
 verb_root(yıka, wash, regular).
 verb_root(oyna, play, regular).
+verb_root(çalış, work, regular).
 verb_root(konuş, speak, irregular).
 verb_root(dinle, listen, regular).
 verb_root(bekle, wait, regular).
@@ -64,29 +65,6 @@ verb_root(tut, hold, irregular).
 verb_root(bak, look, regular).
 verb_root(dene, try, regular).
 verb_root(kullan, use, regular).
-verb_root(düş, fall, irregular).
-verb_root(kal, stay, regular).
-verb_root(dur, stop, regular).
-verb_root(gir, enter, regular).
-verb_root(çık, exit, regular).
-verb_root(dön, turn, regular).
-verb_root(atla, jump, regular).
-verb_root(yürü, walk, regular).
-verb_root(ara, search, regular).
-verb_root(ara, call, regular).
-verb_root(ağla, cry, regular).
-verb_root(gül, laugh, regular).
-verb_root(düşür, drop, regular).
-verb_root(kır, break, regular).
-verb_root(aç, open, regular).
-verb_root(kapa, close, regular).
-verb_root(seç, choose, regular).
-verb_root(kaç, escape, regular).
-verb_root(kes, cut, regular).
-verb_root(çiz, draw, regular).
-verb_root(sil, wipe, regular).
-verb_root(temizle, clean, regular).
-verb_root(çalış,work,regular).
 
 % =============================================================================
 % DÜZENSİZ FİİLLER: irregular_verb(Base, Past, PastParticiple, PresentParticiple).
@@ -128,13 +106,20 @@ irregular_verb(teach, 'taught', taught, teaching).
 irregular_verb(hear, 'heard', heard, hearing).
 irregular_verb(hold, 'held', held, holding).
 irregular_verb(want, 'wanted', wanted, wanting).
-irregular_verb(fall, 'fell', fallen, falling).
-irregular_verb(walk, 'walked', walked, walking).
 
 % =============================================================================
 % ZAMAN EKLERİ: tense_suffix(Suffix, Tense).
 % =============================================================================
-tense_suffix(iyor, present_continuous).
+tense_suffix(iyordu, past_continuous).
+tense_suffix(ıyordu, past_continuous).
+tense_suffix(uyordu, past_continuous).
+tense_suffix(üyordu, past_continuous).
+tense_suffix(miyordu, past_continuous).
+tense_suffix(mıyordu, past_continuous).
+tense_suffix(muyordu, past_continuous).
+tense_suffix(müyordu, past_continuous).
+tense_suffix(yor, present_continuous).
+tense_suffix(r, aorist).
 tense_suffix(ıyor, present_continuous).
 tense_suffix(uyor, present_continuous).
 tense_suffix(üyor, present_continuous).
@@ -156,6 +141,7 @@ tense_suffix(ir, aorist).
 tense_suffix(ır, aorist).
 tense_suffix(ur, aorist).
 tense_suffix(ür, aorist).
+tense_suffix(iyor, present_continuous).
 tense_suffix(miş, past_reported).
 tense_suffix(muş, past_reported).
 tense_suffix(mış, past_reported).
@@ -164,12 +150,18 @@ tense_suffix(meli, necessity).
 tense_suffix(malı, necessity).
 tense_suffix(ebil, ability).
 tense_suffix(abil, ability).
-tense_suffix(yor, present_continuous).
-tense_suffix(r, aorist).
 
 % =============================================================================
 % ŞAHIS EKLERİ: person_suffix(Suffix, Person, Plurality, Tense).
 % =============================================================================
+person_suffix(m, 1, singular, past_continuous).
+person_suffix(n, 2, singular, past_continuous).
+person_suffix('', 3, singular, past_continuous).
+person_suffix(k, 1, plural, past_continuous).
+person_suffix(nuz, 2, plural, past_continuous).
+person_suffix(nüz, 2, plural, past_continuous).
+person_suffix(lar, 3, plural, past_continuous).
+person_suffix(ler, 3, plural, past_continuous).
 person_suffix(um, 1, singular, present_continuous).
 person_suffix(sun, 2, singular, present_continuous).
 person_suffix('', 3, singular, present_continuous).
@@ -235,6 +227,14 @@ turkish_irregular_root("oynuy", oyna).
 % =============================================================================
 % YARDIMCI FİİLLER: auxiliary_verb(Tense, Person, Plurality, Negation, Auxiliary).
 % =============================================================================
+auxiliary_verb(past_continuous, 1, singular, false, was).
+auxiliary_verb(past_continuous, 3, singular, false, was).
+auxiliary_verb(past_continuous, 1, singular, true, 'was not').
+auxiliary_verb(past_continuous, 3, singular, true, 'was not').
+auxiliary_verb(past_continuous, 2, singular, false, were).
+auxiliary_verb(past_continuous, _, plural, false, were).
+auxiliary_verb(past_continuous, 2, singular, true, 'were not').
+auxiliary_verb(past_continuous, _, plural, true, 'were not').
 auxiliary_verb(present_continuous, 1, singular, false, am).
 auxiliary_verb(present_continuous, 2, singular, false, are).
 auxiliary_verb(present_continuous, 3, singular, false, is).
@@ -638,6 +638,7 @@ noun_root(su, water, waters, food, back).
 noun_root(ekmek, bread, breads, food, front).
 noun_root(elma, apple, apples, food, back).
 noun_root(yemek, food, foods, food, front).
+noun_root(çay, tea, teas, food, back).
 noun_root(kahve, coffee, coffees, food, front).
 noun_root(iş, work, works, abstract, front).
 noun_root(para, money, money, abstract, back).
@@ -652,9 +653,3 @@ noun_root(ayak, foot, feet, body, back).
 noun_root(göz, eye, eyes, body, front).
 noun_root(baş, head, heads, body, back).
 noun_root(kalp, heart, hearts, body, back).
-noun_root(yer, ground, grounds, place, front).
-noun_root(yol, road, roads, place, back).
-noun_root(sokak, street, streets, place, back).
-noun_root(deniz, sea, seas, place, front).
-noun_root(orman, forest, forests, place, back).
-noun_root(dağ, mountain, mountains, place, back).

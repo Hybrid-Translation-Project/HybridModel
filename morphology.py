@@ -46,6 +46,9 @@ class EnglishConjugation:
 
 # Zaman ekleri (regex pattern → zaman adı)
 TURKISH_TENSE_SUFFIXES = [
+    # Past Continuous: -iyordu (Bunu en başa ekledik ki -yor ile karışmasın)
+    (r'[iıuü]yord[uüıi]', 'past_continuous'),
+
     # Present Continuous: -iyor, -ıyor, -uyor, -üyor
     (r'[iıuü]yor', 'present_continuous'),
     
@@ -269,17 +272,34 @@ class TurkishMorphologyAnalyzer:
         
         # Kökü çıkar
         potential_root = word[:tense_match_end]
-        
-        # Bilinen köklerle eşleştir
         root = None
+        
+        # 1. Bilinen köklerle eşleştir (Doğrudan veya uzun kök kapsama)
         for known_root in sorted(self.verb_roots.keys(), key=len, reverse=True):
-            if potential_root.endswith(known_root) or potential_root == known_root:
+            if potential_root == known_root:
                 root = known_root
                 break
-            # Ünlü uyumu nedeniyle değişmiş olabilir
-            if self._vowel_harmony_match(potential_root, known_root):
+            # Eğer potential_root daha uzunsa (örn: okuy-or -> oku)
+            if potential_root.startswith(known_root) and len(potential_root) <= len(known_root) + 1:
                 root = known_root
                 break
+
+        # 2. Ünlü Daralması Kurtarma (dinl -> dinle, başl -> başla)
+        # Eğer kök bulunamadıysa ve zaman eki "yor" içeriyorsa
+        if not root and "yor" in (tense or ""):
+            for suffix in ["e", "a"]:
+                recovered = potential_root + suffix
+                if recovered in self.verb_roots:
+                    root = recovered
+                    break
+
+        # 3. Hala bulunamadıysa mevcut fuzzy match ve varsayılan mantığı
+        if not root:
+             for known_root in sorted(self.verb_roots.keys(), key=len, reverse=True):
+                # Ünlü uyumu nedeniyle değişmiş olabilir
+                if self._vowel_harmony_match(potential_root, known_root):
+                    root = known_root
+                    break
         
         if not root:
             # Kök bulunamadı, potential_root'u kullan
@@ -289,14 +309,23 @@ class TurkishMorphologyAnalyzer:
         person = 3
         plurality = 'singular'
         
-        suffix_after_tense = word[tense_match_end:]
-        person_patterns = TURKISH_PERSON_SUFFIXES.get(tense, TURKISH_PERSON_SUFFIXES['present_continuous'])
-        
-        for pattern, p, plur in person_patterns:
-            if re.search(pattern, suffix_after_tense):
-                person = p
-                plurality = plur
-                break
+        # Past continuous için özel durum (regex "iyordu"yu yediği için suffix kalmıyor)
+        if tense == 'past_continuous':
+             if original.endswith(('dum', 'düm')): person, plurality = 1, 'singular'
+             elif original.endswith(('dun', 'dün')): person, plurality = 2, 'singular'
+             elif original.endswith(('duk', 'dük')): person, plurality = 1, 'plural'
+             elif original.endswith(('dunuz', 'dünüz')): person, plurality = 2, 'plural'
+             elif original.endswith(('du', 'dü')): person, plurality = 3, 'singular'
+             elif original.endswith(('dular', 'düler')): person, plurality = 3, 'plural'
+        else:
+            suffix_after_tense = word[tense_match_end:]
+            person_patterns = TURKISH_PERSON_SUFFIXES.get(tense, TURKISH_PERSON_SUFFIXES['present_continuous'])
+            
+            for pattern, p, plur in person_patterns:
+                if re.search(pattern, suffix_after_tense):
+                    person = p
+                    plurality = plur
+                    break
         
         return TurkishMorpheme(
             root=root,
@@ -413,6 +442,15 @@ class EnglishConjugator:
                 auxiliary = "is not" if negation else "is"
             else:
                 auxiliary = "are not" if negation else "are"
+            conjugated_verb = self.get_present_participle(verb)
+        
+        # YENİ EKLENEN KISIM: Past Continuous
+        elif tense == 'past_continuous':
+            # was/were + V-ing
+            if person in [1, 3] and plurality == 'singular':
+                auxiliary = "was not" if negation else "was"
+            else:
+                auxiliary = "were not" if negation else "were"
             conjugated_verb = self.get_present_participle(verb)
             
         elif tense == 'past_simple':
@@ -572,6 +610,10 @@ def test_morphology():
     translator = MorphologyTranslator()
     
     test_cases = [
+        # Past Continuous (Test)
+        "dinliyordu",
+        "geliyordu",
+
         # Present Continuous
         "geliyorum",      # I am coming
         "gidiyorsun",     # you are going

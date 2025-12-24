@@ -327,8 +327,9 @@ class MorphologyDB:
         """Tüm zaman eklerini getir (öncelik sırasına göre)."""
         if self.use_mock:
             return self._mock_tense_suffixes()
-        
-        cursor = self.db.tense_suffixes.find({}).sort("priority", 1)
+        # DÜZELTME BURADA: 1 yerine -1 yaptık (Descending/Azalan sıralama)
+        # Böylece Priority yüksek olanlar en üste çıkacak yoksa was were çalışmıyordu.
+        cursor = self.db.tense_suffixes.find({}).sort("priority", -1)
         return [TenseSuffix(
             suffix=doc["suffix"],
             tense=doc["tense"],

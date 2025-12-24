@@ -424,6 +424,8 @@ NGRAMS_DATA = [
     {"words": ["I", "drink", "water"], "frequency": 8500, "type": "trigram"},
     {"words": ["I", "read", "book"], "frequency": 12000, "type": "trigram"},
     {"words": ["I", "go", "home"], "frequency": 25000, "type": "trigram"}
+
+
 ]
 
 # 5. GRAMMAR RULES - Dilbilgisi Kuralları
@@ -557,6 +559,16 @@ IRREGULAR_VERBS_DATA = [
 
 # 8. TENSE SUFFIXES - Türkçe Zaman Ekleri
 TENSE_SUFFIXES_DATA = [
+    # Şimdiki Zamanın Hikayesi (-yordu)
+    {"suffix": "iyordu", "tense": "past_continuous", "priority": 10, "description": "Şimdiki zamanın hikayesi (ince-düz)"},
+    {"suffix": "ıyordu", "tense": "past_continuous", "priority": 10, "description": "Şimdiki zamanın hikayesi (kalın-düz)"},
+    {"suffix": "uyordu", "tense": "past_continuous", "priority": 10, "description": "Şimdiki zamanın hikayesi (kalın-yuvarlak)"},
+    {"suffix": "üyordu", "tense": "past_continuous", "priority": 10, "description": "Şimdiki zamanın hikayesi (ince-yuvarlak)"},
+    {"suffix": "miyordu", "tense": "past_continuous", "priority": 10, "description": "Olumsuz (ince)"},
+    {"suffix": "mıyordu", "tense": "past_continuous", "priority": 10, "description": "Olumsuz (kalın)"},
+    {"suffix": "muyordu", "tense": "past_continuous", "priority": 10, "description": "Olumsuz (kalın-yuvarlak)"},
+    {"suffix": "müyordu", "tense": "past_continuous", "priority": 10, "description": "Olumsuz (ince-yuvarlak)"},
+
     # Şimdiki Zaman (-yor)
     {"suffix": "iyor", "tense": "present_continuous", "priority": 1, "description": "Şimdiki zaman"},
     {"suffix": "ıyor", "tense": "present_continuous", "priority": 1, "description": "Şimdiki zaman"},
@@ -606,6 +618,19 @@ TENSE_SUFFIXES_DATA = [
 
 # 9. PERSON SUFFIXES - Türkçe Şahıs Ekleri
 PERSON_SUFFIXES_DATA = [
+
+    # Şimdiki Zamanın Hikayesi için gerekli şahıs ekleri
+    {"suffix": "m", "person": 1, "plurality": "singular", "tense": "past_continuous"},
+    {"suffix": "n", "person": 2, "plurality": "singular", "tense": "past_continuous"},
+    {"suffix": "", "person": 3, "plurality": "singular", "tense": "past_continuous"},
+    {"suffix": "k", "person": 1, "plurality": "plural", "tense": "past_continuous"},
+    {"suffix": "nuz", "person": 2, "plurality": "plural", "tense": "past_continuous"},
+    {"suffix": "nüz", "person": 2, "plurality": "plural", "tense": "past_continuous"},
+    {"suffix": "lar", "person": 3, "plurality": "plural", "tense": "past_continuous"},
+    {"suffix": "ler", "person": 3, "plurality": "plural", "tense": "past_continuous"},
+
+
+
     # Şimdiki Zaman
     {"suffix": "um", "person": 1, "plurality": "singular", "tense": "present_continuous"},
     {"suffix": "sun", "person": 2, "plurality": "singular", "tense": "present_continuous"},
@@ -1328,6 +1353,19 @@ NOUN_ROOTS_DATA = [
 ]
 
 AUXILIARY_VERBS_DATA = [
+
+     # --- Past Continuous (Was/Were) ---
+    {"tense": "past_continuous", "person": 1, "plurality": "singular", "negation": False, "auxiliary": "was"},
+    {"tense": "past_continuous", "person": 3, "plurality": "singular", "negation": False, "auxiliary": "was"},
+    {"tense": "past_continuous", "person": 1, "plurality": "singular", "negation": True, "auxiliary": "was not"},
+    {"tense": "past_continuous", "person": 3, "plurality": "singular", "negation": True, "auxiliary": "was not"},
+    {"tense": "past_continuous", "person": 2, "plurality": "singular", "negation": False, "auxiliary": "were"},
+    {"tense": "past_continuous", "person": None, "plurality": "plural", "negation": False, "auxiliary": "were"}, # Genel çoğul
+    {"tense": "past_continuous", "person": 2, "plurality": "singular", "negation": True, "auxiliary": "were not"},
+    {"tense": "past_continuous", "person": None, "plurality": "plural", "negation": True, "auxiliary": "were not"},
+
+
+
     # Present Continuous
     {"tense": "present_continuous", "person": 1, "plurality": "singular", "negation": False, "auxiliary": "am"},
     {"tense": "present_continuous", "person": 2, "plurality": "singular", "negation": False, "auxiliary": "are"},

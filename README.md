@@ -12,6 +12,7 @@ Türkçe cümleleri İngilizce'ye çeviren, Prolog tabanlı hibrit bir makine ç
 - **Görkem**
 - **Samet**
 - **Sadık**
+- **Can**
 ---
 
 ## 📋 İçindekiler

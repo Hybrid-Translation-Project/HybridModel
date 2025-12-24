@@ -646,6 +646,11 @@ class HybridTranslator:
         
         if self.config.debug_mode:
             print(f"\n[AMBIGUITY CHECK] Ambiguous: {ambiguous}, Confidence: {confidence:.2f}")
+
+            
+            
+
+
         
         # ---------------------------------------------------------
         # ADIM 4: Çözümleme (Resolution)
