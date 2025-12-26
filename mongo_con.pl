@@ -19,7 +19,7 @@
    When USE_MOCK = true, uses built-in facts instead of Python
    Set to false to use MongoDB via Python subprocess
 ---------------------------------------------------------- */
-use_mock(true).
+use_mock(false).
 
 /* =========================================================
    GELIŞMIŞ MOCK DATA SİSTEMİ

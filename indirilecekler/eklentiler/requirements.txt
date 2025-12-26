@@ -5,3 +5,5 @@ openai-whisper
 torch 
 torchaudio 
 pymongo
+transformers
+pyswip

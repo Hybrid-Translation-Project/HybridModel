@@ -18,7 +18,7 @@ except ImportError:
     PYMONGO_AVAILABLE = False
     if not USE_MOCK_DATA:
         print("[WARNING] pymongo not installed. Switching to mock mode.")
-        USE_MOCK_DATA = True
+        USE_MOCK_DATA = False
 
 # -----------------------------
 # MongoDB bağlantısı fonksiyonu
