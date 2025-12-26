@@ -113,6 +113,7 @@ Türkçe cümleleri İngilizce'ye çeviren, Prolog tabanlı hibrit bir makine ç
    - Sorun: `iste` kökü `ist` + `iyor` olarak yanlış parse ediliyor
    - Çözüm: Ünlü ile biten köklerin `-iyor` eki ile birleşmesi düzeltilmeli
    - Dosya: `morphology.pl` → `find_tense_and_root/4`
+   - Çözüldü ✅
 
 2. **`bakiyorum` → `lookking` (çift k hatası)**
    - Sorun: Present participle oluşturulurken CVC kuralı yanlış uygulanıyor

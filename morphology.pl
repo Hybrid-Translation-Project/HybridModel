@@ -777,6 +777,51 @@ check_negation(Word, CleanWord, true) :-
 
 check_negation(Word, Word, false).
 
+
+% Daralmayı geri alma kuralları (Backtracking ile tüm ihtimalleri dener)
+% ASCII karakterler (i, u) hem ince hem kalın seslere dönüşebilir.
+
+reverse_narrowing("i", "e").  % bekli -> bekle
+reverse_narrowing("i", "a").  % basli -> basla (ASCII 'i' = 'ı' ise)
+reverse_narrowing("ı", "a").  % ağlı -> ağla
+reverse_narrowing("u", "a").  % oynu -> oyna
+reverse_narrowing("u", "e").  % soylu -> soyle (ASCII 'u' = 'ü' ise)
+reverse_narrowing("ü", "e").  % özlü -> özle
+
+% KURAL: -yor ekinden önceki daralmış ünlüyü genişlet
+find_tense_and_root(Word, Root, Tense, Remainder) :-
+    atom_string(Word, WordStr),
+    % Kelime 'yor' içeriyor mu?
+    sub_string(WordStr, Before, 3, After, "yor"),
+    Before > 0,
+    
+    % 'yor'dan önceki kısmı al: 'istiyor' -> 'isti'
+    sub_string(WordStr, 0, Before, _, RootNarrowStr),
+    
+    % Son harfine bak
+    string_length(RootNarrowStr, Len),
+    LastIdx is Len - 1,
+    sub_string(RootNarrowStr, LastIdx, 1, 0, LastChar),
+    
+    % Olası dönüşümleri dene (verb_root bulunana kadar sırayla dener)
+    reverse_narrowing(LastChar, WideChar),
+    
+    % Daralmayı tersine çevirip yeni kök oluştur
+    sub_string(RootNarrowStr, 0, LastIdx, 1, Base),
+    string_concat(Base, WideChar, RealRootStr),
+    
+    % Bu yeni kök veritabanında GERÇEKTEN var mı?
+    atom_string(RealRootAtom, RealRootStr),
+    verb_root(RealRootAtom, _, _),
+    
+    % Eşleşme bulunduysa sonuçları ata ve dur (!)
+    Root = RealRootAtom,
+    Tense = present_continuous,
+    sub_string(WordStr, _, After, 0, RemainderStr),
+    atom_string(Remainder, RemainderStr),
+    !.
+
+
 % Zaman ve kök bulma
 find_tense_and_root(Word, Root, Tense, Remainder) :-
     atom_string(Word, WordStr),
