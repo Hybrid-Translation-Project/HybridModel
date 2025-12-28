@@ -214,8 +214,9 @@ python morphology_api.py --generate
 ### Adım 6: Test Et
 
 ```bash
-# Prolog'u çalıştır
+# Prolog'u çalıştır ve prolog klasörüne gir
 swipl
+cd(prolog).
 
 # Çeviriyi yükle ve test et
 ?- consult(que_translator).
@@ -224,12 +225,14 @@ swipl
 
 ---
 
-## 💻 Kullanım
+
 
 ### Prolog'dan Doğrudan Kullanım
 
 ```prolog
 % Çeviri modülünü yükle
+   swipl
+?- cd(prolog).
 ?- consult(que_translator).
 
 % Tek kelime çevirisi
@@ -280,22 +283,38 @@ python morphology_api.py --generate
 ## 📁 Dosya Yapısı
 
 ```
-PrologPlus/
-├── 📄 README.md                 # Bu dosya
-├── 📄 que_translator.pl         # Ana çeviri motoru
-├── 📄 morphology.pl             # Morfoloji modülü
-├── 📄 morphology_data.pl        # MongoDB'den oluşturulan facts (otomatik)
-├── 📄 mongo_con.pl              # Prolog-MongoDB bağlantısı + mock data
-├── 📄 morphology_api.py         # Python morfoloji API
-├── 📄 mongo_api.py              # Python MongoDB API
-├── 📄 setup_mongodb.py          # Veritabanı kurulum scripti
-├── 📄 user_interface.py         # Kullanıcı arayüzü
-├── 📂 interfaces/               # Arayüz modülleri
-│   ├── data_add_page.py
-│   ├── data_delete_page.py
-│   ├── data_search_page.py
-│   └── ...
-└── 📂 __pycache__/              # Python cache
+HybridModel/
+├── 📂 final_marian_model/       # Hibrit sistemin Yapay Zeka (Nöral Çeviri) modeli
+├── 📂 interfaces/               # Kullanıcı arayüzü (GUI) alt sayfaları
+├── 📂 prolog/                   # Mantıksal Programlama (Logic) Katmanı
+│   └── 📂 morphology/           # Morfolojik analiz sistemi
+│       ├── 📂 core/
+│       │   └── 📄 morphology_core.pl  # Sistemin beyni: Kelimeyi parçalayan ana algoritma
+│       ├── 📂 data/
+│       │   └── 📄 morphology_data.pl  # Veritabanı: Kökler ve kelime türleri (Facts)
+│       ├── 📂 noun/
+│       │   └── 📄 morph_noun.pl       # İsim çekim ve hal ekleri kuralları
+│       ├── 📂 phonology/
+│       │   └── 📄 morph_phonology.pl  # Ses bilgisi: Ünlü uyumu, yumuşama kuralları
+│       ├── 📂 question/
+│       │   └── 📄 morph_question.pl   # Soru eki (mı, mi) çözümleyicisi
+│       ├── 📂 utils/                  # Yardımcı araçlar
+│       │   ├── 📄 morph_eng_utils.pl  # İngilizce gramer yardımcı fonksiyonları
+│       │   └── 📄 morph_utils.pl      # Genel metin işleme (String) araçları
+│       ├── 📂 verb/                   # Fiil işleme modülleri
+│       │   ├── 📄 morph_gerund.pl     # Fiilimsiler ve zarf-fiil ekleri
+│       │   ├── 📄 morph_negation.pl   # Olumsuzluk eki işleyicisi
+│       │   └── 📄 morph_tense.pl      # Zaman ve şahıs ekleri çözümleyicisi
+│       ├── 📄 morphology_main.pl      # Prolog modüllerini yükleyen ana yönetici
+│       └── 📄 que_translator.pl       # Analiz edilen yapıyı çeviren modül
+├── 📄 main.py                   # Uygulamanın ana giriş noktası (Entry Point)
+├── 📄 mongo_api.py              # Python tarafı MongoDB veritabanı API'si
+├── 📄 mongo_con.pl              # Prolog tarafı MongoDB bağlantı köprüsü
+├── 📄 morphology_api.py         # Python-Prolog haberleşme katmanı (PySwip)
+├── 📄 morphology.py             # Python morfoloji sarmalayıcısı
+├── 📄 setup_mongodb.py          # Veritabanı kurulum ve sıfırlama scripti
+├── 📄 user_interface.py         # Ana kullanıcı arayüzü (GUI) penceresi
+└── 📄 requirements.txt          # Proje bağımlılıkları ve kütüphaneler
 ```
 
 ---

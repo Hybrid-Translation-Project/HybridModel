@@ -43,9 +43,9 @@ class TranslatorConfig:
     """Configuration for the hybrid translator."""
     ambiguity_threshold: int = 3
     max_candidates: int = 10
-    prolog_file: str = "que_translator.pl"
+    prolog_file: str = "prolog/que_translator.pl"
     debug_mode: bool = True
-    # BURAYI EKLE: Senin model klasörünün yolu
+    # AI model klasörünün yolu
     ai_model_path: str = "./final_marian_model"
 
 CONFIG = TranslatorConfig()
@@ -622,23 +622,43 @@ class HybridTranslator:
         # ESKİ KOD: input_words'ü geri döndürüyordu.
         # YENİ KOD: MarianMT'yi çağırıyoruz.
         
+
+        # Eğer en iyi aday girdiyle birebir aynıysa, Prolog çevirememiştir.
+        # Bu durumda AI'ya zorla yönlendir.
+        
         if not candidates:
             if self.config.debug_mode:
-                print("\n[FAIL STATE] Prolog aday üretemedi. Yapay Zeka devreye giriyor...")
+                print(f"\n[FAIL STATE] Prolog kelimeyi tanıyamadı (Boş sonuç). MarianMT devreye giriyor...")
             
-            # AI Fonksiyonunu çağır (Generation Mode)
-            # context yerine boş bir liste gönderiyoruz, çünkü aday yok.
             ai_result = ai_resolve_ambiguity(input_words, [], context)
             
             return TranslationResult(
                 input_sentence=input_words,
                 candidates=[ai_result],
                 best_translation=ai_result.translation,
-                is_ambiguous=True,   # Prolog bilemediği için teknik olarak belirsiz
-                ai_resolved=True,    # AI çözdü
-                confidence=0.95      # AI'ya güvenimiz tam
+                is_ambiguous=True,
+                ai_resolved=True,
+                confidence=0.90
             )
+        top_candidate = candidates[0]
+        # Girdiyi string'e çevir (küçük harf)
+        input_str = " ".join(input_words).lower()
         
+        #Düzeltme Eğer çeviri sonucu girdinin aynısıysa VE skor çok düşükse (1.0 gibi). önceden aynısını döndürüyordu şimdi skor <5 ise ai çevirir.
+        if top_candidate.translation.lower() == input_str and top_candidate.score < 5.0:
+            if self.config.debug_mode:
+                print(f"\n[FAIL STATE] Prolog kelimeyi tanıyamadı (Aynen döndürdü). Yapay Zeka devreye giriyor...")
+            
+            ai_result = ai_resolve_ambiguity(input_words, [], context)
+            
+            return TranslationResult(
+                input_sentence=input_words,
+                candidates=[ai_result],
+                best_translation=ai_result.translation,
+                is_ambiguous=True,
+                ai_resolved=True,
+                confidence=0.90
+            )
         # ---------------------------------------------------------
         # ADIM 3: Ambiguity (Kararsızlık) Kontrolü
         # ---------------------------------------------------------
@@ -646,10 +666,6 @@ class HybridTranslator:
         
         if self.config.debug_mode:
             print(f"\n[AMBIGUITY CHECK] Ambiguous: {ambiguous}, Confidence: {confidence:.2f}")
-
-            
-            
-
 
         
         # ---------------------------------------------------------

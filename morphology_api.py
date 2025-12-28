@@ -884,7 +884,34 @@ class MorphologyDB:
     
     def export_to_prolog_format(self) -> str:
         """Tüm verileri Prolog fact formatında export et."""
+        
         lines = []
+
+                # =============================================================
+        # MODULE HEADER (ÇOK KRİTİK)
+        # =============================================================
+        lines.append(":- encoding(utf8).")
+        lines.append("")
+        lines.append(":- module(morphology_data, [")
+        lines.append("    noun_root/5,")
+        lines.append("    verb_root/3,")
+        lines.append("    irregular_verb/4,")
+        lines.append("    tense_suffix/2,")
+        lines.append("    person_suffix/4,")
+        lines.append("    turkish_irregular_root/2,")
+        lines.append("    auxiliary_verb/5,")
+        lines.append("    case_suffix/4,")
+        lines.append("    possessive_suffix/4,")
+        lines.append("    negation_suffix/3,")
+        lines.append("    question_particle/4,")
+        lines.append("    postposition/4,")
+        lines.append("    conjunction/3,")
+        lines.append("    copula_suffix/5,")
+        lines.append("    plural_suffix/2")
+        lines.append("]).")
+        lines.append("")
+
+        
         lines.append("% =============================================================================")
         lines.append("% MORPHOLOGY DATA - MongoDB'den Otomatik Oluşturuldu")
         lines.append("% =============================================================================")
@@ -1178,14 +1205,25 @@ class MorphologyDB:
         
         return "\n".join(lines)
     
-    def export_to_prolog_file(self, filepath: str = "morphology_data.pl") -> bool:
+    def export_to_prolog_file(self, filepath: str = None) -> bool:
         """MongoDB'den okunan verileri Prolog dosyasına yaz."""
         try:
+            import os
+
+            if filepath is None:
+                script_dir = os.path.dirname(os.path.abspath(__file__))
+                prolog_dir = os.path.join(script_dir, "prolog", "morphology", "data")
+                os.makedirs(prolog_dir, exist_ok=True)
+                filepath = os.path.join(prolog_dir, "morphology_data.pl")
+
             prolog_content = self.export_to_prolog_format()
+
             with open(filepath, "w", encoding="utf-8") as f:
                 f.write(prolog_content)
+
             print(f"[OK] Prolog facts dosyası oluşturuldu: {filepath}")
             return True
+
         except Exception as e:
             print(f"[HATA] Dosya yazılamadı: {e}")
             return False
@@ -1400,17 +1438,14 @@ def test_morphology_db():
 
 def generate_prolog_data():
     """MongoDB'den Prolog facts dosyası oluştur."""
-    import os
-    
     db = MorphologyDB()
-    
+
     print("="*60)
     print("PROLOG FACTS DOSYASI OLUŞTURUCU")
     print("="*60)
     print(f"Veri Kaynağı: {'Mock Data' if db.use_mock else 'MongoDB'}")
     print()
-    
-    # İstatistikler
+
     stats = {
         "Fiil Kökleri": len(db.get_all_verb_roots()),
         "Düzensiz Fiiller": len(db.get_all_irregular_verbs()),
@@ -1420,23 +1455,17 @@ def generate_prolog_data():
         "Yardımcı Fiiller": len(db.get_all_auxiliary_verbs()),
         "Fonoloji Kuralları": len(db.get_all_phonology_rules()),
     }
-    
+
     print("Veri İstatistikleri:")
-    for key, value in stats.items():
-        print(f"  {key}: {value} adet")
+    for k, v in stats.items():
+        print(f"  {k}: {v} adet")
     print()
-    
-    # Dosya yolu
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    filepath = os.path.join(script_dir, "morphology_data.pl")
-    
-    # Dosyaya yaz
-    if db.export_to_prolog_file(filepath):
+
+    if db.export_to_prolog_file():
         print(f"\nToplam {sum(stats.values())} fact oluşturuldu.")
-        print("Artık morphology.pl bu dosyayı kullanabilir.")
+        print("Artık prolog/morphology/data/morphology_data.pl kullanılıyor.")
     else:
         print("\n[HATA] Dosya oluşturulamadı!")
-
 
 if __name__ == "__main__":
     import sys
